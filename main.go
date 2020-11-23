@@ -25,9 +25,9 @@ type Article struct {
 
 // SBSResponse ...
 type SBSResponse struct {
-	Status  int
-	Message string
-	Data    interface{}
+	Status  int         `json:"id,omitempty"`
+	Message string      `json:"message,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
 var (
@@ -41,8 +41,8 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/articles", createArticle).Methods("POST")
-	r.HandleFunc("/articles", getArticles).Methods("GET")
 	r.HandleFunc("/articles/{article_id}", getArticle).Methods("GET")
+	r.HandleFunc("/articles", getArticles).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
@@ -78,9 +78,28 @@ func createArticle(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func getArticle(w http.ResponseWriter, r *http.Request) {
+	println("Getting single article...")
+	params := mux.Vars(r)
+	articleID, err := primitive.ObjectIDFromHex(params["article_id"])
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	var a Article
+	err = articleCollection.FindOne(context.TODO(), bson.M{"_id": articleID}).Decode(&a)
+	if err != nil {
+		writeResponse(w, http.StatusNotFound, err.Error(), nil)
+		return
+	}
+
+	writeResponse(w, http.StatusOK, "Success", []Article{a})
+}
+
 func getArticles(w http.ResponseWriter, r *http.Request) {
 	println("Getting all articles...")
-	cursor, err := articleCollection.Find(context.TODO(), bson.D{{}})
+	cursor, err := articleCollection.Find(context.TODO(), bson.M{})
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -97,11 +116,6 @@ func getArticles(w http.ResponseWriter, r *http.Request) {
 		articleList = append(articleList, &a)
 	}
 	writeResponse(w, http.StatusOK, "Success", articleList)
-}
-
-func getArticle(w http.ResponseWriter, r *http.Request) {
-	println("Getting single article...")
-	writeResponse(w, http.StatusOK, "Success", "")
 }
 
 func initDb() {
