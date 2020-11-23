@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -26,7 +27,7 @@ type Article struct {
 type SBSResponse struct {
 	Status  int
 	Message string
-	Data    *Article
+	Data    interface{}
 }
 
 var (
@@ -46,7 +47,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
-func writeResponse(w http.ResponseWriter, rStatus int, rMessage string, rData *Article) {
+func writeResponse(w http.ResponseWriter, rStatus int, rMessage string, rData interface{}) {
+	w.Header().Set("Content-Type", "application/json")
 	res := SBSResponse{
 		Status:  rStatus,
 		Message: rMessage,
@@ -55,27 +57,8 @@ func writeResponse(w http.ResponseWriter, rStatus int, rMessage string, rData *A
 	json.NewEncoder(w).Encode(res)
 }
 
-func initDb() {
-	println("Connecting to DB...")
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	articleCollection = client.Database("sbs").Collection("articles")
-}
-
 func createArticle(w http.ResponseWriter, r *http.Request) {
 	println("Creating article...")
-	w.Header().Set("Content-Type", "application/json")
-
-	println("Extracing article values from json request...")
 	var article Article
 	err := json.NewDecoder(r.Body).Decode(&article)
 	if err != nil {
@@ -97,11 +80,42 @@ func createArticle(w http.ResponseWriter, r *http.Request) {
 
 func getArticles(w http.ResponseWriter, r *http.Request) {
 	println("Getting all articles...")
-	// json.NewEncoder(w).Encode(article.get())
-	w.Write([]byte("Getting all articles..."))
+	cursor, err := articleCollection.Find(context.TODO(), bson.D{{}})
+	if err != nil {
+		writeResponse(w, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	var articleList []*Article
+	for cursor.Next(context.TODO()) {
+		var a Article
+		err := cursor.Decode(&a)
+		if err != nil {
+			writeResponse(w, http.StatusInternalServerError, err.Error(), nil)
+			return
+		}
+		articleList = append(articleList, &a)
+	}
+	writeResponse(w, http.StatusOK, "Success", articleList)
 }
 
 func getArticle(w http.ResponseWriter, r *http.Request) {
 	println("Getting single article...")
-	w.Write([]byte("Getting single article..."))
+	writeResponse(w, http.StatusOK, "Success", "")
+}
+
+func initDb() {
+	println("Connecting to DB...")
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = client.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	articleCollection = client.Database("sbs").Collection("articles")
 }
