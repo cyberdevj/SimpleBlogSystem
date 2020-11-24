@@ -25,9 +25,9 @@ type Article struct {
 
 // SBSResponse ...
 type SBSResponse struct {
-	Status  int         `json:"id,omitempty"`
-	Message string      `json:"message,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }
 
 var (
@@ -54,6 +54,7 @@ func Router() *mux.Router {
 
 func writeResponse(w http.ResponseWriter, rStatus int, rMessage string, rData interface{}) {
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(rStatus)
 	res := SBSResponse{
 		Status:  rStatus,
 		Message: rMessage,
