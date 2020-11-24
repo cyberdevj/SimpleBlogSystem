@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  sbs:
+    build: .
+    ports:
+      - "8080:8080"
+    networks:
+      - webproxy
+    volumes:
+      - .:/SimpleBlogSystem
+    depends_on: 
+      - mongo
+  mongo:
+    image: 'mongo'
+    ports:
+      - "27017:27017"
+    networks:
+      - webproxy
+    volumes:
+      - /var/lib/mongodb/data
+networks:
+  webproxy:
+    driver: bridge
