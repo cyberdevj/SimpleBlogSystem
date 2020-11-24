@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -69,6 +70,11 @@ func createArticle(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&article)
 	if err != nil {
 		writeResponse(w, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	if article.Title == "" || article.Content == "" || article.Author == "" {
+		writeResponse(w, http.StatusBadRequest, errors.New("json request missing some required fields").Error(), nil)
 		return
 	}
 
