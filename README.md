@@ -2,8 +2,8 @@
 A simple blog system
 
 ### Pre-requisition
-Golang >= 1.15.5
-MongoDB >= 4.4
+- Golang >= 1.15.5
+- MongoDB >= 4.4
 
 ### Build
 To build, please run the following command:
