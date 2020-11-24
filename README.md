@@ -28,4 +28,4 @@ MongoDB data files will be created in data folder of the project.
 - Collection -> articles
 
 ### Docker
-Unfortunately docker wasn't implemented.
+Unfortunately docker requirement wasn't completed.
