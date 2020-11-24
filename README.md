@@ -16,6 +16,11 @@ make build
 start.sh
 `
 
+### Unit Testing
+`
+go test
+`
+
 ### MongoDB
 MongoDB data files will be created in data folder of the project.
 
