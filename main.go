@@ -38,13 +38,18 @@ func main() {
 	println("Starting Simple Blog System...")
 	initDb()
 
+	r := Router()
+	log.Fatal(http.ListenAndServe(":8080", r))
+}
+
+// Router ...
+func Router() *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/articles", createArticle).Methods("POST")
 	r.HandleFunc("/articles/{article_id}", getArticle).Methods("GET")
 	r.HandleFunc("/articles", getArticles).Methods("GET")
-
-	log.Fatal(http.ListenAndServe(":8080", r))
+	return r
 }
 
 func writeResponse(w http.ResponseWriter, rStatus int, rMessage string, rData interface{}) {
