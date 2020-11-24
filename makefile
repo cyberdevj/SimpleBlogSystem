@@ -1,5 +1,5 @@
 build:
-	go build -o bin/main main.go
+	go build -o bin/SimpleBlogSystem main.go
 
 test:
 	go test
